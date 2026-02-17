@@ -1,5 +1,5 @@
 import { Effect, Data } from "effect"
-import { FileSystem, CommandExecutor, Command as PlatformCommand } from "@effect/platform"
+import { CommandExecutor, Command as PlatformCommand } from "@effect/platform"
 
 export class BuildError extends Data.TaggedError("BuildError")<{
   readonly message: string
@@ -11,7 +11,6 @@ export class BuildService extends Effect.Service<BuildService>()(
   {
     accessors: true,
     effect: Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem
       const executor = yield* CommandExecutor.CommandExecutor
 
       const runCommand = (cmd: string, args: ReadonlyArray<string>, cwd: string) =>
@@ -29,28 +28,24 @@ export class BuildService extends Effect.Service<BuildService>()(
         })
 
       const generateManifest = (projectDir: string) =>
-        runCommand("bun", ["run", "generate-manifest"], projectDir).pipe(
+        runCommand("tsx", ["scripts/generate-manifest.ts"], projectDir).pipe(
           Effect.mapError(
             (cause) => new BuildError({ message: "Failed to generate manifest", cause }),
           ),
         )
 
-      const bundle = (projectDir: string) =>
-        runCommand("bun", ["build", "src/cli.ts", "--outdir", "dist", "--target", "bun"], projectDir).pipe(
-          Effect.mapError(
-            (cause) => new BuildError({ message: "Failed to bundle CLI", cause }),
-          ),
-        )
+      const bundle = (_projectDir: string) =>
+        Effect.void
 
       const buildBinaries = (projectDir: string) =>
-        runCommand("bun", ["run", "scripts/build-binaries.ts"], projectDir).pipe(
+        runCommand("tsx", ["scripts/build-binaries.ts"], projectDir).pipe(
           Effect.mapError(
             (cause) => new BuildError({ message: "Failed to build binaries", cause }),
           ),
         )
 
       const install = (projectDir: string) =>
-        runCommand("bun", ["install"], projectDir).pipe(
+        runCommand("npm", ["install"], projectDir).pipe(
           Effect.mapError(
             (cause) => new BuildError({ message: "Failed to install dependencies", cause }),
           ),
@@ -58,7 +53,7 @@ export class BuildService extends Effect.Service<BuildService>()(
 
       const dev = (projectDir: string) =>
         Effect.gen(function* () {
-          const command = PlatformCommand.make("bun", "run", "src/cli.ts").pipe(
+          const command = PlatformCommand.make("tsx", "src/cli.ts").pipe(
             PlatformCommand.workingDirectory(projectDir),
           )
           const process = yield* executor.start(command)

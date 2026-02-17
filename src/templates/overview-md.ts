@@ -31,5 +31,5 @@ and pointers to relevant source files.
 ## Adding Topics
 
 Add new topics by creating markdown files in the \`${config.topicsDir}/\` directory
-with YAML frontmatter, then run \`bun run generate-manifest\` to rebuild.
+with YAML frontmatter, then run \`npx tsx scripts/generate-manifest.ts\` to rebuild.
 `

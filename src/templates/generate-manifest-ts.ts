@@ -2,8 +2,11 @@ import type { ProjectConfig } from "../schemas/project-config.js"
 
 export const generateManifestTs = (config: ProjectConfig): string =>
   `import { readdir, readFile, writeFile } from "node:fs/promises"
-import { join } from "node:path"
+import { join, dirname } from "node:path"
+import { fileURLToPath } from "node:url"
 import matter from "gray-matter"
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 interface TopicEntry {
   slug: string
@@ -16,8 +19,8 @@ interface TopicEntry {
   content: string
 }
 
-const topicsDir = join(import.meta.dir, "..", "${config.topicsDir}")
-const outputFile = join(import.meta.dir, "..", "src", "docs-manifest.ts")
+const topicsDir = join(__dirname, "..", "${config.topicsDir}")
+const outputFile = join(__dirname, "..", "src", "docs-manifest.ts")
 
 const files = (await readdir(topicsDir)).filter((f) => f.endsWith(".md")).sort()
 

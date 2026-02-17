@@ -15,7 +15,7 @@ export const tsconfigJson = (): string =>
         sourceMap: true,
         esModuleInterop: true,
         skipLibCheck: true,
-        types: ["bun-types"],
+        types: ["node"],
       },
       include: ["src/**/*.ts", "scripts/**/*.ts"],
     },

@@ -30,10 +30,10 @@ AI agents waste context window exploring codebases — reading directory trees, 
 
 ## Install
 
-Requires [Bun](https://bun.sh) (grimoire and its scaffolded projects use Bun as runtime and bundler).
+Requires Node.js 20+ and [tsx](https://tsx.is).
 
 ```bash
-bun install -g grimoire-gen
+npm install -g grimoire-gen
 ```
 
 ## Commands
@@ -45,8 +45,8 @@ Scaffold a new solutions CLI project.
 ```bash
 grimoire init my-project
 cd my-project-solutions
-bun install
-bun run src/cli.ts list
+npm install
+npx tsx src/cli.ts list
 ```
 
 Creates a complete `@effect/cli` project with `list`, `show <topic>`, and `setup` commands, plus a starter overview topic.
@@ -66,10 +66,10 @@ grimoire analyze --mode agent ./my-codebase
 # Writes my-codebase-analysis-prompt.md
 ```
 
-**API mode** — calls the Anthropic API directly to generate topics:
+**API mode** — calls the OpenRouter API directly to generate topics:
 
 ```bash
-ANTHROPIC_API_KEY=sk-... grimoire analyze --mode api ./my-codebase
+OPENROUTER_API_KEY=sk-... grimoire analyze --mode api ./my-codebase
 ```
 
 The API pipeline runs three phases: discovery (codebase overview), topic planning (8-15 proposals), and topic generation (full markdown for each).
@@ -95,11 +95,10 @@ Creates a markdown file in `topics/` with YAML frontmatter. Edit it, then rebuil
 Build the scaffolded CLI.
 
 ```bash
-grimoire build              # manifest + bundle
-grimoire build --publishable  # + cross-platform binaries
+grimoire build
 ```
 
-Generates `docs-manifest.ts` from topic files, then bundles everything with Bun.
+Generates `docs-manifest.ts` from topic files.
 
 ### `grimoire dev <args>`
 
@@ -139,9 +138,9 @@ How errors flow through the system...
 
 ## How It Works
 
-1. **`grimoire init`** scaffolds a project from TypeScript template functions (not string templates — they're type-checked and ship inside the binary)
+1. **`grimoire init`** scaffolds a project from TypeScript template functions (not string templates — they're type-checked and ship inside the package)
 2. **Topics** are markdown files with frontmatter, compiled into a typed `docs-manifest.ts` registry
-3. **`grimoire analyze`** reads a codebase (respecting `.gitignore`), then either generates a prompt for an AI agent or calls the Anthropic API to produce topics directly
+3. **`grimoire analyze`** reads a codebase (respecting `.gitignore`), then either generates a prompt for an AI agent or calls the OpenRouter API to produce topics directly
 4. **The output CLI** is a standalone `@effect/cli` project — `list` shows topics, `show <topic>` renders them
 
 ## Configuration
@@ -163,8 +162,8 @@ How errors flow through the system...
 
 - [Effect](https://effect.website) — typed functional programming for TypeScript
 - [@effect/cli](https://github.com/Effect-TS/effect/tree/main/packages/cli) — type-safe CLI framework
-- [@effect/ai-anthropic](https://github.com/Effect-TS/effect/tree/main/packages/ai-anthropic) — Anthropic API client (optional, for `--mode api`)
-- [Bun](https://bun.sh) — runtime, bundler, and binary compilation
+- [@effect/ai-openrouter](https://github.com/Effect-TS/effect/tree/main/packages/ai-openrouter) — OpenRouter API client (optional, for `--mode api`)
+- [tsx](https://tsx.is) — TypeScript runtime for Node.js
 
 ## License
 

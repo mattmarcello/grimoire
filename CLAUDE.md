@@ -11,10 +11,10 @@ AI-assisted codebase navigation CLI generator. Analyzes any codebase (via AI or 
 ### What's Done
 - `grimoire init [name]` — scaffolds a working solutions CLI project
 - `grimoire add <topic>` — adds topic templates with frontmatter
-- `grimoire build [--publishable]` — generates manifest, bundles CLI, optional binaries
+- `grimoire build` — generates manifest from topics
 - `grimoire dev <args>` — regenerates manifest and runs scaffolded CLI
 - `grimoire analyze --mode agent <path>` — generates prompt file for Claude Code
-- `grimoire analyze --mode api <path>` — runs AI analysis pipeline via Anthropic API (needs `ANTHROPIC_API_KEY`)
+- `grimoire analyze --mode api <path>` — runs AI analysis pipeline via OpenRouter (needs `OPENROUTER_API_KEY`)
 
 ### What's Remaining (Phase 6: Polish)
 - `UpdateNotifier` service exists but isn't wired into CLI output
@@ -25,20 +25,20 @@ AI-assisted codebase navigation CLI generator. Analyzes any codebase (via AI or 
 
 ## Architecture
 
-**Runtime**: Bun. **Framework**: Effect with `@effect/cli`.
+**Runtime**: Node.js (via tsx). **Framework**: Effect with `@effect/cli`.
 
 ### Key Patterns
 - **Effect.Service class pattern** with `accessors: true` for all services
 - **Layer composition** in `cli.ts`: BaseServices → DependentServices → ServiceLayer
-- **Templates as TypeScript functions** (not .hbs/.ejs) — type-checked, ship inside binary
+- **Templates as TypeScript functions** (not .hbs/.ejs) — type-checked, ship inside the package
 - **`grimoire.json`** separate from `package.json` for project config
-- **Lazy AI loading** — `@effect/ai-anthropic` is only imported when `--mode api` is used, so no API key needed for other commands
+- **Lazy AI loading** — `@effect/ai-openrouter` is only imported when `--mode api` is used, so no API key needed for other commands
 
 ### Service Dependencies
 ```
 CLI Commands
   ├── init      → ScaffoldService, ProjectConfigService, FileSystem
-  ├── analyze   → AgentPromptGenerator | (TopicWriter + Anthropic LanguageModel)
+  ├── analyze   → AgentPromptGenerator | (TopicWriter + OpenRouter LanguageModel)
   ├── build     → ProjectConfigService, ManifestGenerator
   ├── add       → ProjectConfigService, TopicWriter
   └── dev       → ProjectConfigService, ManifestGenerator
@@ -53,26 +53,26 @@ Three-phase pipeline using `LanguageModel.generateObject` with Effect Schema val
 2. **Topic Planning** → `TopicProposalSet` (8-15 proposals)
 3. **Topic Generation** → `GeneratedTopic` for each proposal
 
-Anthropic layer is composed inline in the analyze command:
+OpenRouter layer is composed inline in the analyze command:
 ```
-AnthropicLanguageModel.model() → AnthropicClient.layerConfig() → FetchHttpClient.layer
+OpenRouterLanguageModel.layer() → OpenRouterClient.layerConfig() → FetchHttpClient.layer
 ```
 
 ## Development
 
 ```bash
-bun install
-bun run src/cli.ts --help        # run CLI directly
-bun run typecheck                 # tsc --noEmit (passes clean)
+npm install
+npx tsx src/cli.ts --help        # run CLI directly
+npm run typecheck                 # tsc --noEmit
 ```
 
 ### Testing init end-to-end
 ```bash
 cd /tmp
-bun run /path/to/grimoire/src/cli.ts init test-project
+npx tsx /path/to/grimoire/src/cli.ts init test-project
 cd test-project-solutions
-bun install
-bun run src/cli.ts list           # should show overview topic
+npm install
+npx tsx src/cli.ts list           # should show overview topic
 ```
 
 ## File Layout
@@ -87,7 +87,7 @@ src/
   templates/                      # TypeScript functions generating scaffolded project files
   lib/                            # Utilities (render, gitignore, file-tree)
 scripts/
-  build-binaries.ts               # Cross-platform compilation for grimoire itself
+  build-binaries.ts               # Placeholder for cross-platform compilation
 ```
 
 ## Notes

@@ -1,21 +1,10 @@
-import { $ } from "bun"
+// Cross-platform binary compilation is not available with the Node.js runtime.
+// To distribute grimoire, publish to npm with 'npm publish'.
+// Users install with: npm install -g grimoire-gen
+//
+// For standalone binaries, consider:
+//   - Node.js Single Executable Applications (SEA): https://nodejs.org/api/single-executable-applications.html
+//   - pkg: https://github.com/vercel/pkg
 
-const targets = [
-  { name: "linux-x64", target: "bun-linux-x64" },
-  { name: "linux-arm64", target: "bun-linux-arm64" },
-  { name: "darwin-x64", target: "bun-darwin-x64" },
-  { name: "darwin-arm64", target: "bun-darwin-arm64" },
-] as const
-
-const outDir = "dist/binaries"
-
-console.log("Building cross-platform binaries for grimoire...")
-
-for (const { name, target } of targets) {
-  const outPath = `${outDir}/grimoire-${name}`
-  console.log(`  Building ${name}...`)
-  await $`bun build src/cli.ts --compile --target=${target} --outfile=${outPath}`
-  console.log(`  ✓ ${outPath}`)
-}
-
-console.log("\nDone! Binaries written to", outDir)
+console.log("Binary compilation is not configured.")
+console.log("Publish to npm with: npm publish")

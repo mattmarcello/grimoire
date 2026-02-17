@@ -4,7 +4,7 @@ import { FetchHttpClient } from "@effect/platform"
 import { AgentPromptGenerator } from "../services/agent-prompt-generator.js"
 import { ProjectConfigService } from "../services/project-config.js"
 import { TopicWriter } from "../services/topic-writer.js"
-import { AnthropicLanguageModel, AnthropicClient } from "@effect/ai-anthropic"
+import { OpenRouterLanguageModel, OpenRouterClient } from "@effect/ai-openrouter"
 import * as pipeline from "../ai/pipeline.js"
 import * as render from "../lib/render.js"
 
@@ -81,15 +81,17 @@ export const analyzeCommand = Command.make("analyze", {
         yield* Console.log(render.dim("  Phase 3: Topic Generation"))
         yield* Console.log("")
 
-        const apiKey = process.env["ANTHROPIC_API_KEY"]
+        const apiKey = process.env["OPENROUTER_API_KEY"]
         if (!apiKey) {
-          yield* Console.log(render.error("ANTHROPIC_API_KEY environment variable is required for --mode api"))
+          yield* Console.log(render.error("OPENROUTER_API_KEY environment variable is required for --mode api"))
           return
         }
 
-        const AiLayer = AnthropicLanguageModel.model("claude-sonnet-4-20250514").pipe(
+        const AiLayer = OpenRouterLanguageModel.layer({
+          model: "anthropic/claude-sonnet-4-20250514",
+        }).pipe(
           Layer.provide(
-            AnthropicClient.layerConfig({
+            OpenRouterClient.layerConfig({
               apiKey: Config.succeed(Redacted.make(apiKey)),
             }),
           ),

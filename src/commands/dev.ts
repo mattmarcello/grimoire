@@ -1,5 +1,6 @@
 import { Command, Args } from "@effect/cli"
 import { Effect } from "effect"
+import { spawn } from "node:child_process"
 import { ProjectConfigService } from "../services/project-config.js"
 import { ManifestGenerator } from "../services/manifest-generator.js"
 
@@ -28,15 +29,17 @@ export const devCommand = Command.make("dev", {
       // Run the CLI
       const cliArgs = args.passthrough
       yield* Effect.tryPromise({
-        try: async () => {
-          const proc = Bun.spawn(["bun", "run", "src/cli.ts", ...cliArgs], {
-            cwd,
-            stdout: "inherit",
-            stderr: "inherit",
-            stdin: "inherit",
-          })
-          await proc.exited
-        },
+        try: () =>
+          new Promise<void>((resolve, reject) => {
+            const proc = spawn("tsx", ["src/cli.ts", ...cliArgs], {
+              cwd,
+              stdio: "inherit",
+            })
+            proc.on("close", (code) =>
+              code === 0 ? resolve() : reject(new Error(`Exit code ${code}`)),
+            )
+            proc.on("error", reject)
+          }),
         catch: (e) => new Error(`Dev mode failed: ${e}`),
       })
     }),

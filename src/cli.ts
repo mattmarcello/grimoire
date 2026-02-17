@@ -1,5 +1,5 @@
 import { Command } from "@effect/cli"
-import { BunContext, BunRuntime } from "@effect/platform-bun"
+import { NodeContext, NodeRuntime } from "@effect/platform-node"
 import { Effect, Layer } from "effect"
 import { initCommand } from "./commands/init.js"
 import { analyzeCommand } from "./commands/analyze.js"
@@ -49,6 +49,6 @@ const cli = Command.run(rootCommand, {
 
 cli(globalThis.process.argv).pipe(
   Effect.provide(ServiceLayer),
-  Effect.provide(BunContext.layer),
-  BunRuntime.runMain,
+  Effect.provide(NodeContext.layer),
+  NodeRuntime.runMain,
 )

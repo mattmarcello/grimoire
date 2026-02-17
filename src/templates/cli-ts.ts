@@ -2,7 +2,7 @@ import type { ProjectConfig } from "../schemas/project-config.js"
 
 export const cliTs = (config: ProjectConfig): string =>
   `import { Args, Command, Options } from "@effect/cli"
-import { BunContext, BunRuntime } from "@effect/platform-bun"
+import { NodeContext, NodeRuntime } from "@effect/platform-node"
 import { Console, Effect, Array as Arr } from "effect"
 import pc from "picocolors"
 import { topics } from "./docs-manifest.js"
@@ -97,7 +97,7 @@ const cli = Command.run(rootCommand, {
 })
 
 cli(globalThis.process.argv).pipe(
-  Effect.provide(BunContext.layer),
-  BunRuntime.runMain,
+  Effect.provide(NodeContext.layer),
+  NodeRuntime.runMain,
 )
 `

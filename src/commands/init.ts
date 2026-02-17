@@ -71,8 +71,8 @@ export const initCommand = Command.make("init", {
       yield* Console.log("")
       yield* Console.log(render.dim("Next steps:"))
       yield* Console.log(render.dim(`  cd ${dirName}`))
-      yield* Console.log(render.dim("  bun install"))
-      yield* Console.log(render.dim(`  bun dev list`))
+      yield* Console.log(render.dim("  npm install"))
+      yield* Console.log(render.dim(`  npx tsx src/cli.ts list`))
       yield* Console.log("")
     }),
   ),
