@@ -88,7 +88,7 @@ export const analyzeCommand = Command.make("analyze", {
         }
 
         const AiLayer = OpenRouterLanguageModel.layer({
-          model: "anthropic/claude-sonnet-4-20250514",
+          model: "anthropic/claude-opus-4.5",
         }).pipe(
           Layer.provide(
             OpenRouterClient.layerConfig({

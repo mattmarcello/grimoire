@@ -16,8 +16,8 @@ export const packageJson = (config: ProjectConfig): string =>
       },
       dependencies: {
         "@effect/cli": "^0.73.0",
-        "@effect/platform": "^0.94.1",
-        "@effect/platform-node": "^0.94.1",
+        "@effect/platform": "^0.94.2",
+        "@effect/platform-node": "^0.104.0",
         "@effect/printer": "^0.47.0",
         "@effect/printer-ansi": "^0.47.0",
         "@effect/typeclass": "^0.38.0",

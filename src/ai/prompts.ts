@@ -6,7 +6,9 @@ Key principles:
 - Identify architecture patterns, module boundaries, and public APIs
 - Use real code examples from the codebase
 - Point to specific files for deeper understanding
-- Be concise but comprehensive`
+- Be concise but comprehensive
+
+IMPORTANT: Always respond with valid JSON matching the requested schema. No markdown, no commentary — only JSON.`
 
 export const discoveryPrompt = (fileTree: string, keyFileContents: string): string =>
   `Analyze this codebase and produce a structured overview.
@@ -19,12 +21,17 @@ ${fileTree}
 ## Key Files
 ${keyFileContents}
 
-Produce a structured overview including:
-- Project name and type
-- Primary language and build system
-- Key modules with paths and descriptions
-- Architecture patterns used
-- Main entry points`
+Respond with a JSON object matching this exact shape:
+{
+  "projectName": "string",
+  "projectType": "string (e.g. library, application, framework)",
+  "language": "string",
+  "buildSystem": "string",
+  "description": "string",
+  "keyModules": [{ "name": "string", "path": "string", "description": "string" }],
+  "architecturePatterns": ["string"],
+  "entryPoints": ["string"]
+}`
 
 export const topicPlanningPrompt = (overview: string): string =>
   `Based on this codebase overview, propose 8-15 documentation topics.
@@ -32,13 +39,21 @@ export const topicPlanningPrompt = (overview: string): string =>
 ## Codebase Overview
 ${overview}
 
-For each topic, provide:
-- A URL-friendly slug
-- A clear title
-- A one-line description
-- A category (architecture, patterns, api, guides, setup)
-- Relevant file paths to read
-- A suggested order number (0 = most general, higher = more specific)`
+Respond with a JSON object matching this exact shape:
+{
+  "proposals": [
+    {
+      "slug": "url-friendly-slug",
+      "title": "Clear Title",
+      "description": "One-line description",
+      "category": "architecture | patterns | api | guides | setup",
+      "relevantFiles": ["path/to/file.ts"],
+      "order": 0
+    }
+  ]
+}
+
+Order: 0 = most general/overview, higher = more specific.`
 
 export const topicGenerationPrompt = (
   proposal: { slug: string; title: string; description: string; relevantFiles: ReadonlyArray<string> },
@@ -54,10 +69,20 @@ export const topicGenerationPrompt = (
 ## Relevant File Contents
 ${fileContents}
 
-Generate a complete markdown topic with:
-1. Overview section explaining what this covers and why it matters
-2. Key concepts with clear explanations
-3. Real code examples from the files above (not generic examples)
-4. List of related files an agent should read for deeper understanding
+Respond with a JSON object matching this exact shape:
+{
+  "slug": "${proposal.slug}",
+  "title": "${proposal.title}",
+  "description": "one-line description",
+  "category": "architecture | patterns | api | guides | setup",
+  "order": 0,
+  "tags": ["tag1", "tag2"],
+  "relatedFiles": ["path/to/file.ts"],
+  "content": "Full markdown content here with ## headings, code examples from the files above, etc."
+}
 
-Use the actual code from the files provided. Include appropriate tags.`
+The "content" field should contain complete markdown documentation with:
+1. Overview explaining what this covers and why
+2. Key concepts with clear explanations
+3. Real code examples from the files above (not generic)
+4. Related files for deeper understanding`
