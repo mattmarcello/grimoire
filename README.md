@@ -30,11 +30,11 @@ AI agents waste context window exploring codebases — reading directory trees, 
 
 ## Install
 
+Requires [Bun](https://bun.sh) (grimoire and its scaffolded projects use Bun as runtime and bundler).
+
 ```bash
 bun install -g grimoire-gen
 ```
-
-Requires [Bun](https://bun.sh).
 
 ## Commands
 
