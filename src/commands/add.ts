@@ -52,7 +52,7 @@ export const addCommand = Command.make("add", {
       yield* Console.log(render.fileCreated(filePath))
       yield* Console.log("")
       yield* Console.log(render.dim("Edit the file to add content, then run:"))
-      yield* Console.log(render.dim("  cli-gen build"))
+      yield* Console.log(render.dim("  grimoire build"))
       yield* Console.log("")
     }),
   ),

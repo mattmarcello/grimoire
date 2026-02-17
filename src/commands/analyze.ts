@@ -62,7 +62,7 @@ export const analyzeCommand = Command.make("analyze", {
         yield* Console.log(render.success(`Agent prompt written to: ${outputPath}`))
         yield* Console.log("")
         yield* Console.log(render.dim("Use this prompt with Claude Code or another AI agent to generate topics."))
-        yield* Console.log(render.dim("Then run 'cli-gen build' to compile the CLI."))
+        yield* Console.log(render.dim("Then run 'grimoire build' to compile the CLI."))
         yield* Console.log("")
       } else {
         const topicWriter = yield* TopicWriter
@@ -120,7 +120,7 @@ export const analyzeCommand = Command.make("analyze", {
           yield* Console.log(render.fileCreated(file))
         }
         yield* Console.log("")
-        yield* Console.log(render.dim("Run 'cli-gen build' to compile the CLI."))
+        yield* Console.log(render.dim("Run 'grimoire build' to compile the CLI."))
         yield* Console.log("")
       }
     }),

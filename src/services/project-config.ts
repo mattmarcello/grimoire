@@ -2,7 +2,7 @@ import { Effect, Data } from "effect"
 import { FileSystem } from "@effect/platform"
 import { ProjectConfig, decodeProjectConfig, encodeProjectConfig } from "../schemas/project-config.js"
 
-const CONFIG_FILE = "cli-gen.json"
+const CONFIG_FILE = "grimoire.json"
 
 export class ProjectConfigError extends Data.TaggedError("ProjectConfigError")<{
   readonly message: string

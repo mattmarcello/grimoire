@@ -1,10 +1,10 @@
 {
-  "name": "cli-gen",
+  "name": "grimoire",
   "version": "0.1.0",
   "description": "AI-assisted codebase navigation CLI generator",
   "type": "module",
   "bin": {
-    "cli-gen": "./bin.js"
+    "grimoire": "./bin.js"
   },
   "scripts": {
     "dev": "bun run src/cli.ts",

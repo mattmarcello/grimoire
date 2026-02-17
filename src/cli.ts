@@ -14,7 +14,7 @@ import { CodebaseReader } from "./services/codebase-reader.js"
 import { AgentPromptGenerator } from "./services/agent-prompt-generator.js"
 import { UpdateNotifier } from "./services/update-notifier.js"
 
-const rootCommand = Command.make("cli-gen").pipe(
+const rootCommand = Command.make("grimoire").pipe(
   Command.withDescription("AI-assisted codebase navigation CLI generator"),
   Command.withSubcommands([
     initCommand,
@@ -43,7 +43,7 @@ const DependentServices = Layer.mergeAll(
 const ServiceLayer = Layer.provideMerge(DependentServices, BaseServices)
 
 const cli = Command.run(rootCommand, {
-  name: "cli-gen",
+  name: "grimoire",
   version: "0.1.0",
 })
 

@@ -64,7 +64,7 @@ export const initCommand = Command.make("init", {
       for (const file of createdFiles) {
         yield* Console.log(render.fileCreated(file))
       }
-      yield* Console.log(render.fileCreated("cli-gen.json"))
+      yield* Console.log(render.fileCreated("grimoire.json"))
 
       yield* Console.log("")
       yield* Console.log(render.success(`Project created at ${dirName}/`))

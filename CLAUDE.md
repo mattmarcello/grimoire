@@ -1,4 +1,4 @@
-# cli-gen
+# grimoire
 
 AI-assisted codebase navigation CLI generator. Analyzes any codebase (via AI or agent prompts), generates topic documentation, and scaffolds a standalone `@effect/cli` project that agents can use to navigate that codebase.
 
@@ -7,12 +7,12 @@ AI-assisted codebase navigation CLI generator. Analyzes any codebase (via AI or 
 **Phases 1-5 implemented and verified.** All commands work end-to-end.
 
 ### What's Done
-- `cli-gen init [name]` — scaffolds a working solutions CLI project
-- `cli-gen add <topic>` — adds topic templates with frontmatter
-- `cli-gen build [--publishable]` — generates manifest, bundles CLI, optional binaries
-- `cli-gen dev <args>` — regenerates manifest and runs scaffolded CLI
-- `cli-gen analyze --mode agent <path>` — generates prompt file for Claude Code
-- `cli-gen analyze --mode api <path>` — runs AI analysis pipeline via Anthropic API (needs `ANTHROPIC_API_KEY`)
+- `grimoire init [name]` — scaffolds a working solutions CLI project
+- `grimoire add <topic>` — adds topic templates with frontmatter
+- `grimoire build [--publishable]` — generates manifest, bundles CLI, optional binaries
+- `grimoire dev <args>` — regenerates manifest and runs scaffolded CLI
+- `grimoire analyze --mode agent <path>` — generates prompt file for Claude Code
+- `grimoire analyze --mode api <path>` — runs AI analysis pipeline via Anthropic API (needs `ANTHROPIC_API_KEY`)
 
 ### What's Remaining (Phase 6: Polish)
 - `UpdateNotifier` service exists but isn't wired into CLI output
@@ -29,7 +29,7 @@ AI-assisted codebase navigation CLI generator. Analyzes any codebase (via AI or 
 - **Effect.Service class pattern** with `accessors: true` for all services
 - **Layer composition** in `cli.ts`: BaseServices → DependentServices → ServiceLayer
 - **Templates as TypeScript functions** (not .hbs/.ejs) — type-checked, ship inside binary
-- **`cli-gen.json`** separate from `package.json` for project config
+- **`grimoire.json`** separate from `package.json` for project config
 - **Lazy AI loading** — `@effect/ai-anthropic` is only imported when `--mode api` is used, so no API key needed for other commands
 
 ### Service Dependencies
@@ -67,7 +67,7 @@ bun run typecheck                 # tsc --noEmit (passes clean)
 ### Testing init end-to-end
 ```bash
 cd /tmp
-bun run /path/to/cli-gen/src/cli.ts init test-project
+bun run /path/to/grimoire/src/cli.ts init test-project
 cd test-project-solutions
 bun install
 bun run src/cli.ts list           # should show overview topic
@@ -85,7 +85,7 @@ src/
   templates/                      # TypeScript functions generating scaffolded project files
   lib/                            # Utilities (render, gitignore, file-tree)
 scripts/
-  build-binaries.ts               # Cross-platform compilation for cli-gen itself
+  build-binaries.ts               # Cross-platform compilation for grimoire itself
 ```
 
 ## Notes
