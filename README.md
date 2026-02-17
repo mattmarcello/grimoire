@@ -1,6 +1,6 @@
 # grimoire
 
-Instant codebase documentation for AI agents and humans. Two ways to generate, one way to read.
+Instant codebase documentation for AI agents and humans. Generate locally, pull from a shared registry, or contribute your own.
 
 ## Why
 
@@ -14,23 +14,36 @@ Requires Node.js 20+.
 npm install -g grimoire-gen
 ```
 
-## Two Flows
+## Three Flows
 
-### Flow 1: Agent Mode (default)
+### Flow 1: Registry (instant)
 
-Grimoire reads your codebase and emits a detailed prompt to stdout. Pipe it straight to your agent:
+Pull pre-built documentation from the public registry — no AI tokens needed:
 
 ```bash
-grimoire init my-lib --target ./path/to/my-lib | claude
+grimoire add tim-smart/effect-atom
+grimoire show effect-atom overview
 ```
 
-The prompt includes the codebase structure, key source files, and instructions for writing each topic. The agent writes directly to `~/.grimoire/projects/my-lib/topics/`. Status messages go to stderr so piping works cleanly.
+### Flow 2: Agent Mode (default)
 
-The prompt is also saved to `~/.grimoire/projects/my-lib/analysis-prompt.md` for reuse.
+Grimoire reads a codebase and emits a detailed prompt to stdout. Pipe it straight to your agent:
+
+```bash
+grimoire analyze my-lib --path ./src | claude
+```
+
+Works with GitHub repos too:
+
+```bash
+grimoire analyze effect-atom --github tim-smart/effect-atom | claude
+```
+
+The prompt includes the codebase structure, key source files, and instructions for writing each topic. The agent writes directly to `~/.grimoire/projects/<name>/topics/`. Status messages go to stderr so piping works cleanly.
 
 Best for: deep, high-quality documentation — the agent can read additional files and make judgement calls as it writes.
 
-### Flow 2: API Mode
+### Flow 3: API Mode
 
 Grimoire calls an AI provider directly. No agent needed — topics are generated automatically.
 
@@ -45,13 +58,8 @@ export OPENROUTER_API_KEY=sk-...   # uses anthropic/claude-sonnet-4-5
 Then run:
 
 ```bash
-grimoire init my-lib --target ./path/to/my-lib --mode api
-```
-
-Works with URLs too:
-
-```bash
-grimoire init effect-atom --target https://github.com/tim-smart/effect-atom --mode api
+grimoire analyze my-lib --path ./src --mode api
+grimoire analyze effect-atom --github tim-smart/effect-atom --mode api
 ```
 
 Best for: quick results without manual steps.
@@ -71,8 +79,9 @@ grimoire context my-lib                 # markdown snippet for agent instruction
 
 | Command | Purpose |
 |---------|---------|
-| `grimoire init <name> [--target url\|path] [--mode agent\|api]` | Create project + analyze |
-| `grimoire analyze <project> [--target path] [--mode agent\|api]` | Rerun analysis |
+| `grimoire add <name>` | Pull pre-built grimoire from registry |
+| `grimoire analyze <name> [--github\|--path] [--mode]` | Generate locally (creates project if needed) |
+| `grimoire push <name>` | Contribute to the registry |
 | `grimoire list [project]` | List projects or topics |
 | `grimoire show <project> <topic>` | Read a topic |
 | `grimoire context <project>` | Output agent instructions |
@@ -80,10 +89,12 @@ grimoire context my-lib                 # markdown snippet for agent instruction
 
 ## How It Works
 
-1. `init` creates `~/.grimoire/projects/<name>/` with a `grimoire.json` config
+1. `analyze` creates `~/.grimoire/projects/<name>/` with a `grimoire.json` config (or reuses existing)
 2. Analysis reads the codebase (respecting `.gitignore`) and either generates an agent prompt or calls an AI provider
 3. Topics are markdown files with YAML frontmatter — no build step, read directly at runtime
 4. `list`, `show`, and `context` parse frontmatter and render to the terminal
+5. `add` pulls pre-built grimoires from the public registry
+6. `push` helps you contribute your grimoire back to the registry
 
 ## Storage
 

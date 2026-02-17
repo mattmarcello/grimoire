@@ -1,117 +1,172 @@
 import { Args, Command, Options } from "@effect/cli"
+import { FileSystem } from "@effect/platform"
 import { Console, Effect, Option } from "effect"
-import { AgentPromptGenerator } from "../services/agent-prompt-generator.js"
+import { ProjectConfig } from "../schemas/project-config.js"
 import { ProjectConfigService } from "../services/project-config.js"
 import { GrimoireHome } from "../services/grimoire-home.js"
+import { AgentPromptGenerator } from "../services/agent-prompt-generator.js"
 import { TopicWriter } from "../services/topic-writer.js"
+import { resolveSource } from "../services/source-resolver.js"
 import { resolveProvider } from "../ai/provider.js"
 import * as render from "../lib/render.js"
 
-const projectArg = Args.text({ name: "project" }).pipe(
-  Args.withDescription("Project name to analyze"),
+const nameArg = Args.text({ name: "name" }).pipe(
+  Args.withDescription("Project name (e.g. 'effect-atom')"),
 )
 
-const targetOption = Options.text("target").pipe(
-  Options.withAlias("t"),
-  Options.withDescription("Path to the codebase (defaults to source from grimoire.json)"),
+const githubOption = Options.text("github").pipe(
+  Options.withDescription("GitHub owner/repo (e.g. 'tim-smart/effect-atom') or full URL"),
+  Options.optional,
+)
+
+const pathOption = Options.text("path").pipe(
+  Options.withDescription("Local path or subpath within a GitHub repo"),
   Options.optional,
 )
 
 const modeOption = Options.choice("mode", ["agent", "api"]).pipe(
-  Options.withDescription("Analysis mode: 'agent' generates a prompt file, 'api' calls an AI provider directly"),
+  Options.withDescription("Analysis mode: 'agent' emits prompt to stdout, 'api' calls AI directly"),
   Options.withDefault("agent"),
 )
 
+const descriptionOption = Options.text("description").pipe(
+  Options.withAlias("d"),
+  Options.withDescription("Project description (used when creating a new project)"),
+  Options.withDefault("A codebase navigation project"),
+)
+
 export const analyzeCommand = Command.make("analyze", {
-  args: { project: projectArg },
-  options: { target: targetOption, mode: modeOption },
+  args: { name: nameArg },
+  options: { github: githubOption, path: pathOption, mode: modeOption, description: descriptionOption },
 }).pipe(
-  Command.withDescription("Run or rerun analysis for a project"),
+  Command.withDescription("Analyze a codebase and generate topic documentation"),
   Command.withHandler(({ args, options }) =>
     Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem
       const home = yield* GrimoireHome
       const configService = yield* ProjectConfigService
 
-      const projectName = args.project
+      const projectName = args.name
+      const github = Option.getOrUndefined(options.github)
+      const path = Option.getOrUndefined(options.path)
+
+      // Load or create project
       const exists = yield* home.projectExists(projectName)
-      if (!exists) {
-        yield* Console.log(render.error(`Project '${projectName}' not found. Run 'grimoire init ${projectName}' first.`))
+      let config: ProjectConfig
+
+      if (exists) {
+        config = yield* configService.read(projectName)
+      } else {
+        yield* home.ensureHome()
+
+        config = new ProjectConfig({
+          name: projectName,
+          description: options.description,
+          ...(github ? { github, sourceType: "github" as const } : {}),
+          ...(path ? { path } : {}),
+          ...(!github && path ? { sourceType: "path" as const } : {}),
+        })
+
+        const projectDir = home.projectDir(projectName)
+        const topicsDir = `${projectDir}/topics`
+        yield* fs.makeDirectory(topicsDir, { recursive: true })
+        yield* configService.write(projectName, config)
+
+        yield* Console.error(render.success(`Created project '${projectName}'`))
+      }
+
+      // Update config if new source flags provided
+      if (github || path) {
+        config = new ProjectConfig({
+          ...config,
+          ...(github ? { github, sourceType: "github" as const } : {}),
+          ...(path ? { path } : {}),
+          ...(!github && path ? { sourceType: "path" as const } : {}),
+        })
+        yield* configService.write(projectName, config)
+      }
+
+      // Resolve the source — from flags or stored config
+      const resolvedGithub = github ?? config.github
+      const resolvedPath = path ?? config.path
+
+      if (!resolvedGithub && !resolvedPath) {
+        yield* Console.error(render.error("No source specified. Use --github or --path, or set them in grimoire.json."))
         return
       }
 
-      const config = yield* configService.read(projectName)
+      const source = yield* resolveSource({
+        github: resolvedGithub,
+        path: resolvedPath,
+      })
+
       const projectDir = home.projectDir(projectName)
       const topicsDir = `${projectDir}/topics`
 
-      // Resolve target: from --target flag, or from config source
-      const targetRaw = Option.getOrUndefined(options.target) ?? config.source
-      if (!targetRaw) {
-        yield* Console.log(render.error("No target specified. Use --target <path> or set source in grimoire.json"))
-        return
-      }
-
-      const codebasePath = targetRaw.startsWith("/")
-        ? targetRaw
-        : `${process.cwd()}/${targetRaw}`
-
-      yield* Console.error("")
-      yield* Console.error(render.banner(`Analyzing ${projectName}...`))
-      yield* Console.error("")
-
-      if (options.mode === "agent") {
-        const generator = yield* AgentPromptGenerator
-        const promptPath = `${projectDir}/analysis-prompt.md`
-
-        yield* Console.error(render.info("Reading codebase..."))
-        const prompt = yield* generator.generate(codebasePath, promptPath, projectName, topicsDir)
-
+      try {
         yield* Console.error("")
-        yield* Console.error(render.success(`Saved to ~/.grimoire/projects/${projectName}/analysis-prompt.md`))
-        yield* Console.log(prompt)
-      } else {
-        const topicWriter = yield* TopicWriter
+        yield* Console.error(render.banner(`Analyzing ${projectName}...`))
+        yield* Console.error("")
 
-        const provider = yield* resolveProvider().pipe(
-          Effect.catchAll(() =>
-            Effect.gen(function* () {
-              yield* Console.log(render.error("No API key found. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or OPENROUTER_API_KEY."))
-              return yield* Effect.fail("no-key" as const)
-            }),
-          ),
-        )
+        if (options.mode === "agent") {
+          const generator = yield* AgentPromptGenerator
+          const promptPath = `${projectDir}/analysis-prompt.md`
 
-        yield* Console.log(render.info("Running AI analysis pipeline..."))
-        yield* Console.log(render.dim(`  Using ${provider.name}`))
-        yield* Console.log(render.dim("  Phase 1: Discovery"))
-        yield* Console.log(render.dim("  Phase 2: Topic Planning"))
-        yield* Console.log(render.dim("  Phase 3: Topic Generation"))
-        yield* Console.log("")
+          yield* Console.error(render.info("Reading codebase..."))
+          const prompt = yield* generator.generate(source.codebasePath, promptPath, projectName, topicsDir)
 
-        const pipeline = yield* Effect.promise(
-          () => import("../ai/pipeline.js"),
-        )
+          yield* Console.error("")
+          yield* Console.error(render.success(`Saved to ~/.grimoire/projects/${projectName}/analysis-prompt.md`))
+          yield* Console.log(prompt)
+        } else {
+          const topicWriter = yield* TopicWriter
 
-        const { topics } = yield* pipeline.runFullPipeline(codebasePath).pipe(
-          Effect.provide(provider.layer),
-        )
+          const provider = yield* resolveProvider().pipe(
+            Effect.catchAll(() =>
+              Effect.gen(function* () {
+                yield* Console.error(render.error("No API key found. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or OPENROUTER_API_KEY."))
+                yield* Console.error(render.dim("Tip: use --mode agent (default) to generate a prompt file instead."))
+                return yield* Effect.fail("no-key" as const)
+              }),
+            ),
+          )
 
-        for (const topic of topics) {
-          yield* topicWriter.write(topicsDir, {
-            slug: topic.slug,
-            title: topic.title,
-            description: topic.description,
-            order: topic.order,
-            category: topic.category,
-            tags: topic.tags as string[],
-            relatedFiles: topic.relatedFiles as string[],
-            content: "\n" + topic.content,
-          })
+          yield* Console.error(render.info("Running AI analysis pipeline..."))
+          yield* Console.error(render.dim(`  Using ${provider.name}`))
+
+          const { runFullPipeline } = yield* Effect.promise(
+            () => import("../ai/pipeline.js"),
+          )
+
+          const { topics } = yield* runFullPipeline(source.codebasePath).pipe(
+            Effect.provide(provider.layer),
+          )
+
+          for (const topic of topics) {
+            yield* topicWriter.write(topicsDir, {
+              slug: topic.slug,
+              title: topic.title,
+              description: topic.description,
+              order: topic.order,
+              category: topic.category,
+              tags: topic.tags as string[],
+              relatedFiles: topic.relatedFiles as string[],
+              content: "\n" + topic.content,
+            })
+          }
+
+          yield* Console.error("")
+          yield* Console.error(render.success(`Generated ${topics.length} topics`))
+          yield* Console.error("")
+          yield* Console.error(render.dim("Next steps:"))
+          yield* Console.error(render.dim(`  grimoire list ${projectName}`))
+          yield* Console.error(render.dim(`  grimoire show ${projectName} overview`))
+          yield* Console.error("")
         }
-
-        yield* Console.log(render.success(`Generated ${topics.length} topics`))
-        yield* Console.log("")
-        yield* Console.log(render.dim(`Run 'grimoire list ${projectName}' to see topics.`))
-        yield* Console.log("")
+      } finally {
+        if (source.cleanup) {
+          yield* Effect.promise(() => source.cleanup!())
+        }
       }
     }),
   ),
